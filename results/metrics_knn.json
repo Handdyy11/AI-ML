@@ -1,0 +1,104 @@
+{
+  "majority_baseline": {
+    "accuracy": 0.7827,
+    "macro_f1": 0.2195,
+    "per_family": {
+      "Benign": {
+        "precision": 0.7827,
+        "recall": 1.0,
+        "f1-score": 0.8781
+      },
+      "BruteForce": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0
+      },
+      "DoS": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0
+      },
+      "PortScan": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0
+      }
+    }
+  },
+  "decision_tree": {
+    "accuracy": 0.9719,
+    "macro_f1": 0.9369,
+    "per_family": {
+      "Benign": {
+        "precision": 0.9668,
+        "recall": 0.9985,
+        "f1-score": 0.9824
+      },
+      "BruteForce": {
+        "precision": 0.9737,
+        "recall": 0.8014,
+        "f1-score": 0.8792
+      },
+      "DoS": {
+        "precision": 0.9902,
+        "recall": 0.8029,
+        "f1-score": 0.8868
+      },
+      "PortScan": {
+        "precision": 0.9994,
+        "recall": 0.9991,
+        "f1-score": 0.9992
+      }
+    }
+  },
+  "knn": {
+    "k": 7,
+    "weights": "distance",
+    "accuracy": 0.9805,
+    "macro_f1": 0.9491,
+    "per_family": {
+      "Benign": {
+        "precision": 0.9845,
+        "recall": 0.9908,
+        "f1-score": 0.9876
+      },
+      "BruteForce": {
+        "precision": 0.991,
+        "recall": 0.7906,
+        "f1-score": 0.8795
+      },
+      "DoS": {
+        "precision": 0.9432,
+        "recall": 0.9166,
+        "f1-score": 0.9297
+      },
+      "PortScan": {
+        "precision": 0.9994,
+        "recall": 0.9994,
+        "f1-score": 0.9994
+      }
+    }
+  },
+  "features_used": [
+    "Protocol",
+    "Flow Duration",
+    "Bwd Packet Length Max",
+    "Bwd Packet Length Mean",
+    "Bwd Packet Length Std",
+    "Flow IAT Std",
+    "Flow IAT Max",
+    "Fwd IAT Total",
+    "Fwd IAT Std",
+    "Fwd IAT Max",
+    "Max Packet Length",
+    "Packet Length Mean",
+    "Packet Length Std",
+    "Packet Length Variance",
+    "PSH Flag Count",
+    "Average Packet Size",
+    "Avg Bwd Segment Size",
+    "Idle Mean",
+    "Idle Max",
+    "Idle Min"
+  ]
+}
