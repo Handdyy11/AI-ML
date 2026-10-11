@@ -1,0 +1,19 @@
+# Core libraries: enough for Phases 2, 3, 4 and 5
+pandas>=2.0
+numpy
+pyarrow
+scikit-learn
+imbalanced-learn
+mlxtend
+networkx
+matplotlib
+seaborn
+pytest
+jupyter
+
+# Install these later, when you reach the phase that needs them
+# Phase 6 (RAG):
+# sentence-transformers
+# faiss-cpu
+# Demo dashboard (week 7):
+# streamlit

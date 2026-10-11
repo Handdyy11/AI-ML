@@ -1,0 +1,42 @@
+
+# Python environment
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs and temporary files
+*.log
+temp/
+tmp/
+
+# Large datasets — keep raw and processed data out of Git
+data/raw/
+data/processed/
+
+# Generated ML models and large artifacts
+models/
+*.joblib
+*.pkl
+*.h5
+*.keras
+*.pt
+*.pth
+
+// temporary to avoid large files 
+data/raw_unused/*.csv
