@@ -49,6 +49,106 @@
         "recall": 0.9991,
         "f1-score": 0.9992
       }
+    },
+    "confusion": [
+      [
+        30519,
+        38,
+        2,
+        6
+      ],
+      [
+        992,
+        4042,
+        0,
+        0
+      ],
+      [
+        1,
+        2,
+        3173,
+        0
+      ],
+      [
+        55,
+        0,
+        0,
+        222
+      ]
+    ]
+  },
+  "random_forest": {
+    "accuracy": 0.9054,
+    "macro_f1": 0.7431,
+    "per_family": {
+      "Benign": {
+        "precision": 0.9987,
+        "recall": 0.909,
+        "f1-score": 0.9517
+      },
+      "BruteForce": {
+        "precision": 0.073,
+        "recall": 0.9928,
+        "f1-score": 0.136
+      },
+      "DoS": {
+        "precision": 0.962,
+        "recall": 0.8196,
+        "f1-score": 0.8851
+      },
+      "PortScan": {
+        "precision": 0.9994,
+        "recall": 0.9994,
+        "f1-score": 0.9994
+      }
+    },
+    "confusion": [
+      [
+        27784,
+        163,
+        2,
+        2616
+      ],
+      [
+        33,
+        4126,
+        0,
+        875
+      ],
+      [
+        2,
+        0,
+        3174,
+        0
+      ],
+      [
+        2,
+        0,
+        0,
+        275
+      ]
+    ],
+    "feature_importance": {
+      "Average Packet Size": 0.103,
+      "Bwd Packet Length Mean": 0.1014,
+      "Packet Length Std": 0.1004,
+      "Packet Length Mean": 0.0925,
+      "Packet Length Variance": 0.0921,
+      "Avg Bwd Segment Size": 0.0865,
+      "Max Packet Length": 0.0743,
+      "Bwd Packet Length Max": 0.0667,
+      "PSH Flag Count": 0.0493,
+      "Bwd Packet Length Std": 0.0475,
+      "Flow IAT Max": 0.0319,
+      "Flow Duration": 0.0287,
+      "Fwd IAT Max": 0.0272,
+      "Flow IAT Std": 0.0228,
+      "Fwd IAT Total": 0.02,
+      "Fwd IAT Std": 0.0189,
+      "Protocol": 0.0189,
+      "Idle Max": 0.0073,
+      "Idle Mean": 0.0064,
+      "Idle Min": 0.004
     }
   },
   "knn": {
@@ -77,8 +177,112 @@
         "recall": 0.9994,
         "f1-score": 0.9994
       }
-    }
+    },
+    "confusion": [
+      [
+        30285,
+        276,
+        2,
+        2
+      ],
+      [
+        420,
+        4614,
+        0,
+        0
+      ],
+      [
+        0,
+        2,
+        3174,
+        0
+      ],
+      [
+        58,
+        0,
+        0,
+        219
+      ]
+    ]
   },
+  "labels": [
+    "Benign",
+    "DoS",
+    "PortScan",
+    "BruteForce"
+  ],
+  "tuning": [
+    {
+      "k": 3,
+      "weights": "uniform",
+      "macro_f1": 0.9529
+    },
+    {
+      "k": 5,
+      "weights": "uniform",
+      "macro_f1": 0.9555
+    },
+    {
+      "k": 7,
+      "weights": "uniform",
+      "macro_f1": 0.9548
+    },
+    {
+      "k": 9,
+      "weights": "uniform",
+      "macro_f1": 0.9514
+    },
+    {
+      "k": 11,
+      "weights": "uniform",
+      "macro_f1": 0.9506
+    },
+    {
+      "k": 13,
+      "weights": "uniform",
+      "macro_f1": 0.9497
+    },
+    {
+      "k": 15,
+      "weights": "uniform",
+      "macro_f1": 0.9497
+    },
+    {
+      "k": 3,
+      "weights": "distance",
+      "macro_f1": 0.9534
+    },
+    {
+      "k": 5,
+      "weights": "distance",
+      "macro_f1": 0.9565
+    },
+    {
+      "k": 7,
+      "weights": "distance",
+      "macro_f1": 0.9569
+    },
+    {
+      "k": 9,
+      "weights": "distance",
+      "macro_f1": 0.9564
+    },
+    {
+      "k": 11,
+      "weights": "distance",
+      "macro_f1": 0.9556
+    },
+    {
+      "k": 13,
+      "weights": "distance",
+      "macro_f1": 0.9557
+    },
+    {
+      "k": 15,
+      "weights": "distance",
+      "macro_f1": 0.9557
+    }
+  ],
   "features_used": [
     "Protocol",
     "Flow Duration",

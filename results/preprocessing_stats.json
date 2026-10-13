@@ -1,0 +1,26 @@
+{
+  "rows_raw": 1954997,
+  "missing_removed": 2369,
+  "duplicates_removed": 52,
+  "rows_clean": 1952576,
+  "files": {
+    "Friday-WorkingHours-Afternoon-PortScan.pcap_ISCX.csv": {
+      "rows": 286467,
+      "columns": 85
+    },
+    "Monday-WorkingHours.pcap_ISCX.csv": {
+      "rows": 529918,
+      "columns": 85
+    },
+    "Tuesday-WorkingHours.pcap_ISCX.csv": {
+      "rows": 445909,
+      "columns": 85
+    },
+    "Wednesday-workingHours.pcap_ISCX.csv": {
+      "rows": 692703,
+      "columns": 85
+    }
+  },
+  "rows_sample": 195258,
+  "sample_fraction": 0.1
+}

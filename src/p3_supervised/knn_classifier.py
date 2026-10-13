@@ -28,11 +28,12 @@ from sklearn.metrics import (
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
 
 from src import config
 
 N_FEATURES = 20  # keep the 20 most useful features (k-NN gets slow and noisy with too many)
-K_CHOICES = [3, 5, 7, 9, 11, 15]  # odd values of k avoid ties between two classes
+K_CHOICES = [3, 5, 7, 9, 11, 13, 15]  # odd values of k avoid ties between two classes
 WEIGHT_CHOICES = ["uniform", "distance"]  # distance: closer neighbours get a bigger vote
 TUNING_ROWS = 40_000  # choose k on a subset, so the search stays fast
 
@@ -152,10 +153,43 @@ def main() -> None:
     baseline = DummyClassifier(strategy="most_frequent").fit(X_train, y_train)
     tree = DecisionTreeClassifier(max_depth=12, random_state=config.SEED).fit(X_train, y_train)
 
+    tree_pred = tree.predict(X_test)
+    labels = [f for f in config.FAMILIES if f in set(y_test) | set(knn_pred)]
+
+    print("\nTraining the random forest ...")
+    forest = RandomForestClassifier(
+        n_estimators=200,
+        max_depth=None,
+        min_samples_leaf=2,
+        class_weight="balanced_subsample",  # gives rare attack families more weight
+        n_jobs=-1,
+        random_state=config.SEED,
+    ).fit(X_train, y_train)
+    forest_pred = forest.predict(X_test)
+
     results = {
         "majority_baseline": evaluate(y_test, baseline.predict(X_test)),
-        "decision_tree": evaluate(y_test, tree.predict(X_test)),
-        "knn": {"k": best_k, "weights": best_weights, **evaluate(y_test, knn_pred)},
+        "decision_tree": {
+            **evaluate(y_test, tree_pred),
+            "confusion": confusion_matrix(y_test, tree_pred, labels=labels).tolist(),
+        },
+
+         "random_forest": {
+            **evaluate(y_test, forest_pred),
+            "confusion": confusion_matrix(y_test, forest_pred, labels=labels).tolist(),
+            "feature_importance": {
+                f: round(float(w), 4)
+                for f, w in sorted(zip(chosen, forest.feature_importances_),
+                                   key=lambda x: -x[1])
+            },
+        },
+        "knn": {
+            "k": best_k, "weights": best_weights,
+            **evaluate(y_test, knn_pred),
+            "confusion": confusion_matrix(y_test, knn_pred, labels=labels).tolist(),
+        },
+        "labels": labels,
+        "tuning": table.round(4).to_dict("records"),
         "features_used": chosen,
     }
 
@@ -166,24 +200,46 @@ def main() -> None:
         {"model": knn, "selector": selector, "features": cols},
         config.DATA_PROCESSED / "knn_model.joblib",
     )
-
+    joblib.dump(
+        {"model": tree, "selector": selector, "features": cols},
+        config.DATA_PROCESSED / "tree_model.joblib",
+    )
+    joblib.dump(
+        {"model": forest, "selector": selector, "features": cols},
+        config.DATA_PROCESSED / "forest_model.joblib",
+    )
     print("\nTest-set results")
+    
+    models = ("knn", "decision_tree", "random_forest", "majority_baseline")
+    names = {
+        "knn": "k-NN",
+        "decision_tree": "decision tree",
+        "random_forest": "random forest",
+        "majority_baseline": "always say Benign",
+    }
+
     summary = pd.DataFrame(
         {
-            "accuracy": [results[m]["accuracy"] for m in ("majority_baseline", "decision_tree", "knn")],
-            "macro_f1": [results[m]["macro_f1"] for m in ("majority_baseline", "decision_tree", "knn")],
+            "accuracy": [results[m]["accuracy"] for m in models],
+            "macro_f1": [results[m]["macro_f1"] for m in models],
         },
-        index=["always say Benign", "decision tree", "k-NN"],
+        index=[names[m] for m in models],
     )
     print(summary.to_string())
 
-    print("\nk-NN recall per family (share of real attacks it caught)")
-    for family, vals in results["knn"]["per_family"].items():
-        print(f"  {family:<11} recall {vals['recall']:.3f}   precision {vals['precision']:.3f}")
+    for m in ("knn", "decision_tree", "random_forest"):
+        print(f"\n{names[m]}: recall and precision per family "
+              f"(recall = share of real attacks it caught)")
+        for family, vals in results[m]["per_family"].items():
+            print(f"  {family:<11} recall {vals['recall']:.3f}   "
+                  f"precision {vals['precision']:.3f}")
+
+    print("\nTop 5 features by random forest importance")
+    for f, w in list(results["random_forest"]["feature_importance"].items())[:5]:
+        print(f"  {f:<28}{w:.4f}")
 
     print(f"\nSaved {config.RESULTS / 'metrics_knn.json'}")
     print(f"Saved {config.RESULTS / 'figures' / 'confusion_matrix_knn.png'}")
-
 
 if __name__ == "__main__":
     main()
