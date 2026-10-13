@@ -353,8 +353,8 @@ def page_models():
             with tab:
                 c1, c2 = st.columns(2)
                 with c1:
-                    df, cfg = per_family_table(metrics)
-                    st.dataframe(df, column_config=cfg, use_container_width=True)
+                    df, _ = per_family_table(metrics)
+                    st.dataframe(df.style.format("{:.3f}"), use_container_width=True)
                 with c2:
                     if "confusion" in metrics:
                         st.pyplot(plot_confusion(metrics["confusion"], labels, name))
