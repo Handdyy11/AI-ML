@@ -221,6 +221,88 @@ def proba_bars(probs):
     )
 
 
+@st.cache_data
+def plot_sample(features):
+    test = load_test()
+    return test.sample(min(5000, len(test)), random_state=42)[list(features) + ["family"]]
+
+
+def importance_chart(model, features, top=15):
+    df = pd.DataFrame({"feature": features, "importance": model.feature_importances_})
+    df = df.nlargest(top, "importance")
+    return (
+        alt.Chart(df)
+        .mark_bar(cornerRadiusEnd=4, color="#38bdf8")
+        .encode(
+            y=alt.Y("feature:N", sort="-x", title=None),
+            x=alt.X("importance:Q", title="Importance"),
+            tooltip=["feature", alt.Tooltip("importance:Q", format=".3f")],
+        )
+        .properties(height=380)
+    )
+
+def family_boxplot(df, feature):
+    d = df[["family", feature]].rename(columns={feature: "value"})
+    lo, hi = d["value"].quantile([0.01, 0.99])  # hide extreme outliers
+    d = d[(d["value"] >= lo) & (d["value"] <= hi)]
+
+    stats = d.groupby("family")["value"].agg(
+        lo="min",
+        q1=lambda s: s.quantile(0.25),
+        med="median",
+        q3=lambda s: s.quantile(0.75),
+        hi="max",
+    ).reset_index()
+
+    base = alt.Chart(stats).encode(
+        x=alt.X("family:N", title=None, axis=alt.Axis(labelAngle=0))
+    )
+    color = alt.Color(
+        "family:N",
+        scale=alt.Scale(domain=list(FAMILY_COLORS), range=list(FAMILY_COLORS.values())),
+        legend=None,
+    )
+    tips = [
+        "family",
+        alt.Tooltip("lo:Q", title="Min", format=",.2f"),
+        alt.Tooltip("q1:Q", title="25%", format=",.2f"),
+        alt.Tooltip("med:Q", title="Median", format=",.2f"),
+        alt.Tooltip("q3:Q", title="75%", format=",.2f"),
+        alt.Tooltip("hi:Q", title="Max", format=",.2f"),
+    ]
+
+    whisker = base.mark_rule(color="white", clip=True).encode(
+        y=alt.Y("lo:Q", title=feature), y2="hi:Q", tooltip=tips)
+    box = base.mark_bar(size=60, clip=True).encode(
+        y="q1:Q", y2="q3:Q", color=color, tooltip=tips)
+    median = base.mark_tick(color="white", size=60, thickness=2, clip=True).encode(
+        y="med:Q", tooltip=tips)
+
+    # Scroll wheel = zoom, drag = pan (up and down only)
+    zoom = alt.selection_interval(bind="scales", encodings=["y"])
+
+    return (whisker + box + median).add_params(zoom).properties(height=380)
+
+def correlation_heatmap(df, features):
+    corr = df[list(features)].corr().fillna(0)   # constant features give NaN, show them as 0
+    long = corr.reset_index(names="a").melt(id_vars="a", var_name="b", value_name="corr")
+    long["val"] = long["corr"].map(lambda v: f"{v:.2f}")
+
+    base = alt.Chart(long).encode(
+        x=alt.X("b:N", title=None, sort=list(features)),
+        y=alt.Y("a:N", title=None, sort=list(features)),
+    )
+    rect = base.mark_rect().encode(
+        color=alt.Color("corr:Q", scale=alt.Scale(scheme="redblue", domain=[-1, 1]),
+                        title="Correlation"),
+        tooltip=["a", "b", alt.Tooltip("val:N", title="Correlation")],
+    )
+    text = base.mark_text(fontSize=10).encode(
+        text="val:N",
+        color=alt.condition("abs(datum.corr) > 0.5", alt.value("white"), alt.value("#0b1220")),
+    )
+    return (rect + text).properties(height=560)
+
 def per_family_table(metrics):
     df = pd.DataFrame(metrics["per_family"]).T.rename(columns={"f1-score": "f1"})
     cfg = {
@@ -313,11 +395,37 @@ def page_data():
             st.markdown("##### Traffic by family")
             st.altair_chart(family_donut(load_family_counts()), use_container_width=True)
 
-    with st.expander("Feature histograms"):
-        pics = sorted((config.RESULTS / "figures").glob("hist_*.png"))
-        grid = st.columns(3)
-        for i, p in enumerate(pics):
-            grid[i % 3].image(str(p))
+    if res:
+        features = res["features_used"]
+        bundles, _ = load_models()
+        sample = plot_sample(tuple(features))
+
+        section("Data and model insights")
+        with st.container(border=True):
+            t1, t2, t3 = st.tabs(["Feature importance", "Feature by family", "Correlation"])
+
+            with t1:
+                options = [n for n in ("Random Forest", "XGBoost") if n in bundles]
+                if options:
+                    pick = st.radio("Model", options, horizontal=True)
+                    model = bundles[pick]["model"]
+                    if len(model.feature_importances_) == len(features):
+                        st.altair_chart(importance_chart(model, features), use_container_width=True)
+                        st.caption("Longer bar = the model relies on that feature more.")
+                    else:
+                        st.warning("Feature count does not match the saved model.")
+                else:
+                    st.info("No Random Forest or XGBoost model file found.")
+
+            with t2:
+                feat = st.selectbox("Feature", features)
+                st.altair_chart(family_boxplot(sample, feat), use_container_width=True)
+                st.caption("Scroll over the chart to zoom, drag to move up or down, "
+                           "double-click to reset.")
+
+            with t3:
+                st.altair_chart(correlation_heatmap(sample, features), use_container_width=True)
+                st.caption("Dark red or blue = strongly related features, which carry similar information.")
 
 
 # =============================================================== PAGE 2: MODELS
