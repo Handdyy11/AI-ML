@@ -1,8 +1,18 @@
 {
   "rows_raw": 1954997,
-  "missing_removed": 2369,
-  "duplicates_removed": 52,
-  "rows_clean": 1952576,
+  "missing_removed": 2458,
+  "duplicates_removed": 139844,
+  "rows_clean": 1812695,
+  "rows_sample": 179828,
+  "sample_fraction": 0.0992,
+  "chunk_rows": 50000,
+  "num_shards": 10,
+  "family_counts": {
+    "Benign": 85000,
+    "DoS": 45000,
+    "PortScan": 40000,
+    "BruteForce": 9828
+  },
   "files": {
     "Friday-WorkingHours-Afternoon-PortScan.pcap_ISCX.csv": {
       "rows": 286467,
@@ -20,7 +30,5 @@
       "rows": 692703,
       "columns": 85
     }
-  },
-  "rows_sample": 195258,
-  "sample_fraction": 0.1
+  }
 }

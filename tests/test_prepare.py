@@ -1,8 +1,14 @@
 import numpy as np
 import pandas as pd
 
-from src.p2_preprocess.binning import bin_counts
-from src.p2_preprocess.sampling import feature_columns, fit_scaler, split_data
+from src.p2_preprocess.binning import bin_counts, bin_counts_in_chunks
+from src.p2_preprocess.sampling import (
+    feature_columns,
+    fit_scaler,
+    fit_scaler_in_chunks,
+    split_data,
+    stream_stratified_split,
+)
 
 
 def make_df():
@@ -54,3 +60,32 @@ def test_bin_counts_has_ten_bins_and_keeps_every_row():
     table = bin_counts(values, n_bins=10)
     assert len(table) == 10
     assert table["count"].sum() == len(values)
+
+
+def test_stream_split_and_chunked_scaler_match_in_memory(tmp_path):
+    df = make_df()
+    sample_path = tmp_path / "sample.parquet"
+    train_path = tmp_path / "train.parquet"
+    test_path = tmp_path / "test.parquet"
+    df.to_parquet(sample_path, index=False)
+
+    info = stream_stratified_split(
+        sample_path=sample_path,
+        train_path=train_path,
+        test_path=test_path,
+        test_size=0.2,
+        batch_size=300,
+    )
+    assert info["sample_rows"] == len(df)
+    assert info["train_rows"] + info["test_rows"] == len(df)
+
+    # Check chunked scaler via partial_fit matches exact mean and std of train.parquet
+    scaler, cols = fit_scaler_in_chunks(train_path=train_path, batch_size=250)
+    assert set(cols) == {"Destination Port", "Flow Duration", "Flow Packets/s"}
+    train_loaded = pd.read_parquet(train_path)
+    assert np.allclose(scaler.mean_, train_loaded[cols].mean().to_numpy(), atol=1e-5)
+
+    # Check chunked histogram counts sum to total rows
+    hist_table = bin_counts_in_chunks(sample_path, "Flow Duration", n_bins=10, batch_size=300)
+    assert len(hist_table) == 10
+    assert hist_table["count"].sum() == len(df)

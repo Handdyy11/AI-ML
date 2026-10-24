@@ -1,100 +1,140 @@
-"""Phase 2, step 2: histograms, stratified split and scaler.
+"""Phase 2, step 2: chunked histograms, streaming stratified split, and incremental scaler.
 
 Run after clean.py, from the project root:
 
     python -m src.p2_preprocess.prepare
 
-Reads  data/processed/sample.parquet
-Writes data/processed/train.parquet, test.parquet, scaler.joblib, feature_columns.json
-       results/figures/hist_*.png
+Streams data/processed/sample.parquet in chunks
+Writes  data/processed/train.parquet, test.parquet, scaler.joblib, feature_columns.json
+        results/figures/hist_*.png
 """
 import json
+import pickle
 
-import joblib
-import mlflow
+try:
+    import joblib
+except ImportError:
+    joblib = None
+
 import pandas as pd
 
 from src import config
-from src.mlflow_tracking import configure_tracking
 from src.p2_preprocess.binning import plot_binned_histograms
 from src.p2_preprocess.sampling import (
-    class_proportions,
-    feature_columns,
-    fit_scaler,
-    split_data,
+    fit_scaler_in_chunks,
+    stream_stratified_split,
 )
 
 
+def _save_joblib(obj, path) -> None:
+    if joblib is not None:
+        joblib.dump(obj, path)
+    else:
+        with open(path, "wb") as fh:
+            pickle.dump(obj, fh)
+
+
 def _run_preparation() -> None:
-    # LOad the dataset
-    df = pd.read_parquet(config.SAMPLE_PATH)
-    print(f"Loaded {len(df):,} rows from {config.SAMPLE_PATH.name}")
-    
-    # plot histogram
-    figures = plot_binned_histograms(df)
+    print(
+        f"Streaming {config.SAMPLE_PATH.name} in chunks of {config.CHUNK_ROWS:,} rows ..."
+    )
+
+    # 1. Plot histograms in chunks directly from sample.parquet
+    figures = plot_binned_histograms(config.SAMPLE_PATH)
     print(f"Saved {len(figures)} histograms to {config.RESULTS / 'figures'}")
 
-    # split
-    train, test = split_data(df)
-    
-    # select features
-    cols = feature_columns(train)
-    # fit the scale
-    scaler = fit_scaler(train, cols)
-    
-    #train
-    train.to_parquet(config.DATA_PROCESSED / "train.parquet", index=False)
-    test.to_parquet(config.DATA_PROCESSED / "test.parquet", index=False)
+    # 2. Stream stratified 80/20 split into train.parquet and test.parquet
+    split_info = stream_stratified_split(
+        sample_path=config.SAMPLE_PATH,
+        train_path=config.TRAIN_PATH,
+        test_path=config.TEST_PATH,
+        test_size=0.2,
+        batch_size=config.CHUNK_ROWS,
+    )
 
-    #Saves the training and testing DataFrames as separate Parquet files.
-    joblib.dump(scaler, config.DATA_PROCESSED / "scaler.joblib")
-    (config.DATA_PROCESSED / "feature_columns.json").write_text(json.dumps(cols, indent=2))
+    # 3. Fit StandardScaler incrementally on train.parquet chunks via partial_fit()
+    scaler, cols = fit_scaler_in_chunks(
+        train_path=config.TRAIN_PATH,
+        batch_size=config.CHUNK_ROWS,
+    )
 
-    # Saves into table and checks class proportion
+    # 4. Save scaler and selected non-constant feature column names
+    _save_joblib(scaler, config.DATA_PROCESSED / "scaler.joblib")
+    (config.DATA_PROCESSED / "feature_columns.json").write_text(
+        json.dumps(cols, indent=2)
+    )
+
+    # 5. Report class proportions across sample, train, and test
+    sample_props = split_info["sample_counts"] / max(split_info["sample_rows"], 1)
+    train_props = split_info["train_counts"] / max(split_info["train_rows"], 1)
+    test_props = split_info["test_counts"] / max(split_info["test_rows"], 1)
+
     table = pd.DataFrame(
         {
-            "sample": class_proportions(df),
-            "train": class_proportions(train),
-            "test": class_proportions(test),
+            "sample": sample_props,
+            "train": train_props,
+            "test": test_props,
         }
     )
     print("\nShare of each family (%): the three columns should match closely")
     print((table * 100).round(2).to_string())
-    print(f"\nTrain rows: {len(train):,}   Test rows: {len(test):,}   Features: {len(cols)}")
+    print(
+        f"\nTrain rows: {split_info['train_rows']:,}   "
+        f"Test rows: {split_info['test_rows']:,}   "
+        f"Features: {len(cols)}"
+    )
 
-    mlflow.log_params(
-        {
-            "random_seed": config.SEED,
-            "test_fraction": len(test) / len(df),
-            "feature_count": len(cols),
-        }
-    )
-    mlflow.log_metrics(
-        {
-            "sample_rows": len(df),
-            "train_rows": len(train),
-            "test_rows": len(test),
-        }
-    )
-    for split_name, frame in (("sample", df), ("train", train), ("test", test)):
-        for family, share in class_proportions(frame).items():
-            mlflow.log_metric(f"{split_name}_share_{family}", float(share))
+    try:
+        import mlflow
 
-    mlflow.log_artifact(
-        str(config.DATA_PROCESSED / "feature_columns.json"),
-        artifact_path="preparation",
-    )
-    mlflow.log_artifact(
-        str(config.DATA_PROCESSED / "scaler.joblib"),
-        artifact_path="preparation",
-    )
-    for figure in figures:
-        mlflow.log_artifact(str(figure), artifact_path="preparation/figures")
+        mlflow.log_params(
+            {
+                "random_seed": config.SEED,
+                "chunk_rows": config.CHUNK_ROWS,
+                "test_fraction": round(
+                    split_info["test_rows"] / max(split_info["sample_rows"], 1), 4
+                ),
+                "feature_count": len(cols),
+            }
+        )
+        mlflow.log_metrics(
+            {
+                "sample_rows": split_info["sample_rows"],
+                "train_rows": split_info["train_rows"],
+                "test_rows": split_info["test_rows"],
+            }
+        )
+        for split_name, series in (
+            ("sample", sample_props),
+            ("train", train_props),
+            ("test", test_props),
+        ):
+            for family, share in series.items():
+                mlflow.log_metric(f"{split_name}_share_{family}", float(share))
+
+        mlflow.log_artifact(
+            str(config.DATA_PROCESSED / "feature_columns.json"),
+            artifact_path="preparation",
+        )
+        mlflow.log_artifact(
+            str(config.DATA_PROCESSED / "scaler.joblib"),
+            artifact_path="preparation",
+        )
+        for figure in figures:
+            mlflow.log_artifact(str(figure), artifact_path="preparation/figures")
+    except ImportError:
+        pass
 
 
 def main() -> None:
-    configure_tracking()
-    with mlflow.start_run(run_name="data-preparation"):
+    try:
+        import mlflow
+        from src.mlflow_tracking import configure_tracking
+
+        configure_tracking()
+        with mlflow.start_run(run_name="data-preparation"):
+            _run_preparation()
+    except ImportError:
         _run_preparation()
 
 
