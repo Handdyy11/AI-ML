@@ -18,20 +18,20 @@ NON_FEATURE_COLUMNS = [
     "Source Port",
 ]
 
-
+# splits data into train and test 
 def split_data(df: pd.DataFrame, test_size: float = 0.2):
     """Split into train and test so every family has the same share in both parts."""
     return train_test_split(
         df, test_size=test_size, stratify=df["family"], random_state=config.SEED
     )
 
-
+# selects model features 
 def feature_columns(train: pd.DataFrame) -> list:
     """Numeric model inputs: no identifiers, and no column that never changes."""
     numeric = train.select_dtypes("number").columns
     return [c for c in numeric if c not in NON_FEATURE_COLUMNS and train[c].nunique() > 1]
 
-
+#Fitting the scaler
 def fit_scaler(train: pd.DataFrame, cols: list) -> StandardScaler:
     """Learn the mean and spread from the TRAINING data only.
 
@@ -40,6 +40,6 @@ def fit_scaler(train: pd.DataFrame, cols: list) -> StandardScaler:
     """
     return StandardScaler().fit(train[cols])
 
-
+#Calculate class proportion
 def class_proportions(df: pd.DataFrame) -> pd.Series:
     return df["family"].value_counts(normalize=True)

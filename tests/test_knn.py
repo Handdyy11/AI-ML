@@ -1,8 +1,13 @@
 import numpy as np
+import mlflow
+from sklearn.neighbors import KNeighborsClassifier
 
-from src.p3_supervised.knn_classifier import (
+from src import config
+from src.mlflow_tracking import configure_tracking
+from src.p3_supervised.models import (
     K_CHOICES,
     WEIGHT_CHOICES,
+    _log_model_runs,
     choose_k,
     evaluate,
     select_features,
@@ -51,3 +56,53 @@ def test_evaluate_reports_per_family_recall():
     assert out["accuracy"] == 0.9
     assert out["per_family"]["DoS"]["recall"] == 0.5
     assert out["per_family"]["Benign"]["recall"] == 1.0
+
+
+def test_log_model_runs_saves_a_loadable_model_and_test_metrics(tmp_path, monkeypatch):
+    X, y = make_blobs(n_per_class=20)
+    cols = [f"c{i}" for i in range(X.shape[1])]
+    selector, _ = select_features(X, y, cols, k=2)
+    model = KNeighborsClassifier(n_neighbors=3).fit(selector.transform(X), y)
+    metrics = evaluate(y, model.predict(selector.transform(X)))
+
+    original_tracking_uri = mlflow.get_tracking_uri()
+    experiment_name = "model-logging-test"
+    monkeypatch.setattr(
+        config,
+        "MLFLOW_TRACKING_URI",
+        f"sqlite:///{(tmp_path / 'mlflow.db').as_posix()}",
+    )
+    monkeypatch.setattr(
+        config,
+        "MLFLOW_ARTIFACT_ROOT",
+        (tmp_path / "artifacts").as_uri(),
+    )
+    monkeypatch.setattr(config, "MLFLOW_EXPERIMENT", experiment_name)
+    try:
+        configure_tracking()
+        with mlflow.start_run(run_name="comparison") as parent_run:
+            _log_model_runs(
+                {"knn": model},
+                {"knn": metrics},
+                selector,
+                X,
+                cols,
+            )
+
+        client = mlflow.MlflowClient()
+        experiment = mlflow.get_experiment_by_name(experiment_name)
+        child_runs = client.search_runs(
+            [experiment.experiment_id],
+            filter_string=f"tags.mlflow.parentRunId = '{parent_run.info.run_id}'",
+        )
+        assert len(child_runs) == 1
+        child = child_runs[0]
+        assert child.data.metrics["test_accuracy"] == metrics["accuracy"]
+        assert child.data.metrics["test_macro_f1"] == metrics["macro_f1"]
+
+        logged_model = mlflow.sklearn.load_model(f"runs:/{child.info.run_id}/model")
+        np.testing.assert_array_equal(
+            logged_model.predict(X), model.predict(selector.transform(X))
+        )
+    finally:
+        mlflow.set_tracking_uri(original_tracking_uri)

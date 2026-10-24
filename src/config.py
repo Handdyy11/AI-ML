@@ -7,6 +7,9 @@ DATA_RAW = PROJECT_ROOT / "data" / "raw"
 DATA_PROCESSED = PROJECT_ROOT / "data" / "processed"
 DOCS = PROJECT_ROOT / "docs"
 RESULTS = PROJECT_ROOT / "results"
+MLFLOW_TRACKING_URI = f"sqlite:///{(PROJECT_ROOT / 'mlruns' / 'mlflow.db').as_posix()}"
+MLFLOW_ARTIFACT_ROOT = (PROJECT_ROOT / "mlruns" / "artifacts").as_uri()
+MLFLOW_EXPERIMENT = "SENTRIX"
 
 SAMPLE_PATH = DATA_PROCESSED / "sample.parquet"
 

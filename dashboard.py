@@ -312,7 +312,7 @@ def page_data():
 def page_models():
     res = read_json("metrics_knn.json")
     if res is None:
-        st.error("Run `python -m src.p3_supervised.knn_classifier` first.")
+        st.error("Run `python -m src.p3_supervised.models` first.")
         return
     labels = res.get("labels", ["Benign", "BruteForce", "DoS", "PortScan"])
     results = available_results(res)

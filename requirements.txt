@@ -10,6 +10,7 @@ matplotlib
 seaborn
 pytest
 jupyter
+mlflow>=3.0
 
 # Install these later, when you reach the phase that needs them
 # Phase 6 (RAG):

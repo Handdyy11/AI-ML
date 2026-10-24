@@ -24,6 +24,7 @@ Thumbs.db
 *.log
 temp/
 tmp/
+mlruns/
 
 # Large datasets — keep raw and processed data out of Git
 data/raw/

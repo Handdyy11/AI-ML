@@ -8,7 +8,7 @@ import pandas as pd
 from src import config
 
 # Columns of the CICIDS2017 files that make good histogram examples.
-# Any column missing from your data is skipped.
+# Remaining columns are skipped
 DEFAULT_COLUMNS = [
     "Flow Duration",
     "Total Fwd Packets",
@@ -20,8 +20,7 @@ DEFAULT_COLUMNS = [
 
 
 def equal_width_bins(values: pd.Series, n_bins: int = 10, clip_quantile: float = 0.99) -> pd.Series:
-    """Cut a numeric column into n_bins bins of equal width.
-
+    """Cut a numeric column into n_bins bins of equal width
     Network features are heavily skewed: a few huge values stretch the range, so
     without clipping almost every flow lands in the first bin. We clip values above
     the 99th percentile first, then cut into equal-width bins.

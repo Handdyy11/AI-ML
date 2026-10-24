@@ -8,10 +8,12 @@ Run from the project root:
 import numpy as np
 import pandas as pd
 import json
+import mlflow
 
 from src import config
+from src.mlflow_tracking import configure_tracking
 
-
+# grouping attack labels = " BENIGN " becomes "benign".
 def label_to_family(label: str) -> str:
     """Group the many CICIDS2017 attack labels into the project's families."""
     name = str(label).strip().lower()
@@ -85,7 +87,7 @@ def stratified_sample(chunk: pd.DataFrame, fraction: float) -> pd.DataFrame:
         frac=fraction, random_state=config.SEED
     )
 
-def main() -> None:
+def _run_cleaning() -> None:
     sample, stats = build_sample()
 
     counts = sample["family"].value_counts()
@@ -99,8 +101,30 @@ def main() -> None:
     print(f"\nSaved {config.SAMPLE_PATH}")
 
     config.RESULTS.mkdir(parents=True, exist_ok=True)
-    (config.RESULTS / "preprocessing_stats.json").write_text(json.dumps(stats, indent=2))
-    print(f"Saved {config.RESULTS / 'preprocessing_stats.json'}")
+    stats_path = config.RESULTS / "preprocessing_stats.json"
+    stats_path.write_text(json.dumps(stats, indent=2))
+    print(f"Saved {stats_path}")
+
+    mlflow.log_params(
+        {
+            "sampling_fraction": stats["sample_fraction"],
+            "random_seed": config.SEED,
+            "chunk_rows": config.CHUNK_ROWS,
+            "input_file_count": len(stats["files"]),
+            "input_files": ", ".join(stats["files"]),
+        }
+    )
+    for metric in ("rows_raw", "missing_removed", "duplicates_removed", "rows_clean", "rows_sample"):
+        mlflow.log_metric(metric, stats[metric])
+    for family, row_count in counts.items():
+        mlflow.log_metric(f"sample_rows_{family}", int(row_count))
+    mlflow.log_artifact(str(stats_path), artifact_path="preprocessing")
+
+
+def main() -> None:
+    configure_tracking()
+    with mlflow.start_run(run_name="data-cleaning"):
+        _run_cleaning()
 
 
 if __name__ == "__main__":
