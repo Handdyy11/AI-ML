@@ -15,9 +15,8 @@ st.set_page_config(page_title="SENTRIX", page_icon="🛡️", layout="wide")
 
 CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 html, body, p, label, input, textarea, button, h1, h2, h3, h4, h5, h6,
-.stMarkdown, [data-testid="stMetricValue"] {font-family: 'Inter', sans-serif;}
+.stMarkdown, [data-testid="stMetricValue"] {font-family: 'Inter', 'Segoe UI', Arial, sans-serif;}
 [data-testid="stIconMaterial"], .material-symbols-rounded {font-family: 'Material Symbols Rounded' !important;}
 .block-container {padding-top: 1.2rem; max-width: 1400px;}
 #MainMenu, footer {visibility: hidden;}
@@ -192,12 +191,24 @@ def family_donut(counts):
 
 
 def proba_bars(probs):
-    df = pd.DataFrame({"family": list(probs), "probability": list(probs.values())})
+    families = list(FAMILY_COLORS) + [family for family in probs if family not in FAMILY_COLORS]
+    df = pd.DataFrame(
+        {
+            "family": families,
+            "probability": [probs.get(family, 0.0) for family in families],
+        }
+    )
     return (
         alt.Chart(df)
         .mark_bar(cornerRadiusEnd=4)
         .encode(
-            y=alt.Y("family:N", sort=None, title=None),
+            y=alt.Y(
+                "family:N",
+                scale=alt.Scale(domain=families),
+                sort=families,
+                title=None,
+                axis=alt.Axis(labelColor="#cbd5e1", labelLimit=120),
+            ),
             x=alt.X("probability:Q", scale=alt.Scale(domain=[0, 1]), title="Probability"),
             color=alt.Color(
                 "family:N",
@@ -206,7 +217,7 @@ def proba_bars(probs):
             ),
             tooltip=["family", alt.Tooltip("probability:Q", format=".1%")],
         )
-        .properties(height=150)
+        .properties(height=240)
     )
 
 
@@ -496,6 +507,7 @@ def page_predict():
             hide_index=True, use_container_width=True,
         )
 
+
 # =============================================================== PAGE 4: SIMULATION
 def page_simulation():
     res = read_json("metrics_knn.json")
@@ -561,14 +573,16 @@ def page_simulation():
         kpi("Attacks missed", f"{len(missed):,}", "predicted Benign but were attacks", "#a78bfa")
 
     section("Decision log")
+    display_log = log.copy()
+    display_log["Confidence"] = display_log["Confidence"] * 100  # show as 0-100 %
     with st.container(border=True):
         st.dataframe(
-            log,
+            display_log,
             hide_index=True,
             use_container_width=True,
             column_config={
                 "Confidence": st.column_config.ProgressColumn(
-                    "Confidence", min_value=0.0, max_value=1.0, format="%.0%"),
+                    "Confidence", min_value=0, max_value=100, format="%.0f%%"),
             },
         )
         st.caption("'Actual' is the true label, shown only to check the system's decisions.")
@@ -586,6 +600,7 @@ def page_simulation():
                 .sort_values("Flows", ascending=False)
             )
             st.dataframe(summary, hide_index=True, use_container_width=True)
+
 
 # =============================================================== MAIN
 def main():
