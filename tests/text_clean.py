@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 from src import config
-from src.p2_preprocess.clean import (
+from src.preprocess.clean import (
     build_sample,
     clean_chunk,
     label_to_family,

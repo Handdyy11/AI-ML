@@ -2,7 +2,7 @@
 
 Run after clean.py, from the project root:
 
-    python -m src.p2_preprocess.prepare
+    python -m src.preprocess.prepare
 
 Streams data/processed/sample.parquet in chunks
 Writes  data/processed/train.parquet, test.parquet, scaler.joblib, feature_columns.json
@@ -19,8 +19,8 @@ except ImportError:
 import pandas as pd
 
 from src import config
-from src.p2_preprocess.binning import plot_binned_histograms
-from src.p2_preprocess.sampling import (
+from src.preprocess.binning import plot_binned_histograms
+from src.preprocess.sampling import (
     fit_scaler_in_chunks,
     stream_stratified_split,
 )

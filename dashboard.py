@@ -79,6 +79,7 @@ MODELS = {
     "k-NN": ("knn", "knn_model.joblib"),
     "Decision tree": ("decision_tree", "tree_model.joblib"),
     "Random Forest": ("random_forest", "forest_model.joblib"),
+    "XGBoost": ("xgboost", "xgboost_model.joblib"),
 }
 
 
@@ -259,7 +260,7 @@ def random_flow_position(test):
 def page_data():
     stats = read_json("preprocessing_stats.json")
     if stats is None:
-        st.error("Run `python -m src.p2_preprocess.clean` first.")
+        st.error("Run `python -m src.preprocess.clean` first.")
         return
     res = read_json("metrics_knn.json")
     n_total = len(feature_columns())
@@ -312,7 +313,7 @@ def page_data():
 def page_models():
     res = read_json("metrics_knn.json")
     if res is None:
-        st.error("Run `python -m src.p3_supervised.models` first.")
+        st.error("Run `python -m src.supervised.models` first.")
         return
     labels = res.get("labels", ["Benign", "BruteForce", "DoS", "PortScan"])
     results = available_results(res)

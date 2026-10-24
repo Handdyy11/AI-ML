@@ -1,12 +1,12 @@
 {
   "majority_baseline": {
-    "accuracy": 0.7827,
-    "macro_f1": 0.2195,
+    "accuracy": 0.4727,
+    "macro_f1": 0.1605,
     "per_family": {
       "Benign": {
-        "precision": 0.7827,
+        "precision": 0.4727,
         "recall": 1.0,
-        "f1-score": 0.8781
+        "f1-score": 0.6419
       },
       "BruteForce": {
         "precision": 0.0,
@@ -26,182 +26,256 @@
     }
   },
   "decision_tree": {
-    "accuracy": 0.9719,
-    "macro_f1": 0.9369,
+    "accuracy": 0.9887,
+    "macro_f1": 0.9832,
     "per_family": {
       "Benign": {
-        "precision": 0.9668,
-        "recall": 0.9985,
-        "f1-score": 0.9824
+        "precision": 0.9811,
+        "recall": 0.9958,
+        "f1-score": 0.9884
       },
       "BruteForce": {
-        "precision": 0.9737,
-        "recall": 0.8014,
-        "f1-score": 0.8792
+        "precision": 0.9973,
+        "recall": 0.9242,
+        "f1-score": 0.9593
       },
       "DoS": {
-        "precision": 0.9902,
-        "recall": 0.8029,
-        "f1-score": 0.8868
+        "precision": 0.9918,
+        "recall": 0.9806,
+        "f1-score": 0.9861
       },
       "PortScan": {
-        "precision": 0.9994,
-        "recall": 0.9991,
-        "f1-score": 0.9992
+        "precision": 0.9995,
+        "recall": 0.9984,
+        "f1-score": 0.9989
       }
     },
     "confusion": [
       [
-        30519,
-        38,
-        2,
-        6
-      ],
-      [
-        992,
-        4042,
-        0,
-        0
-      ],
-      [
+        16929,
+        66,
         1,
+        4
+      ],
+      [
+        173,
+        8826,
         2,
-        3173,
         0
       ],
       [
-        55,
+        5,
+        7,
+        7987,
+        1
+      ],
+      [
+        148,
         0,
-        0,
-        222
+        1,
+        1816
       ]
     ]
   },
   "random_forest": {
-    "accuracy": 0.9054,
-    "macro_f1": 0.7431,
+    "accuracy": 0.9905,
+    "macro_f1": 0.9852,
     "per_family": {
       "Benign": {
-        "precision": 0.9987,
-        "recall": 0.909,
-        "f1-score": 0.9517
+        "precision": 0.9834,
+        "recall": 0.9972,
+        "f1-score": 0.9902
       },
       "BruteForce": {
-        "precision": 0.073,
-        "recall": 0.9928,
-        "f1-score": 0.136
+        "precision": 0.9967,
+        "recall": 0.9298,
+        "f1-score": 0.9621
       },
       "DoS": {
-        "precision": 0.962,
-        "recall": 0.8196,
-        "f1-score": 0.8851
+        "precision": 0.9947,
+        "recall": 0.9836,
+        "f1-score": 0.9891
       },
       "PortScan": {
-        "precision": 0.9994,
-        "recall": 0.9994,
-        "f1-score": 0.9994
+        "precision": 0.9999,
+        "recall": 0.9991,
+        "f1-score": 0.9995
       }
     },
     "confusion": [
       [
-        27784,
-        163,
-        2,
-        2616
+        16952,
+        42,
+        0,
+        6
       ],
       [
-        33,
-        4126,
-        0,
-        875
-      ],
-      [
-        2,
-        0,
-        3174,
+        147,
+        8853,
+        1,
         0
       ],
       [
         2,
+        5,
+        7993,
+        0
+      ],
+      [
+        138,
         0,
         0,
-        275
+        1827
       ]
     ],
     "feature_importance": {
-      "Average Packet Size": 0.103,
-      "Bwd Packet Length Mean": 0.1014,
-      "Packet Length Std": 0.1004,
-      "Packet Length Mean": 0.0925,
-      "Packet Length Variance": 0.0921,
-      "Avg Bwd Segment Size": 0.0865,
-      "Max Packet Length": 0.0743,
-      "Bwd Packet Length Max": 0.0667,
-      "PSH Flag Count": 0.0493,
-      "Bwd Packet Length Std": 0.0475,
-      "Flow IAT Max": 0.0319,
-      "Flow Duration": 0.0287,
-      "Fwd IAT Max": 0.0272,
-      "Flow IAT Std": 0.0228,
-      "Fwd IAT Total": 0.02,
-      "Fwd IAT Std": 0.0189,
-      "Protocol": 0.0189,
-      "Idle Max": 0.0073,
-      "Idle Mean": 0.0064,
-      "Idle Min": 0.004
+      "Packet Length Std": 0.1022,
+      "Bwd Packet Length Mean": 0.1005,
+      "Packet Length Variance": 0.0934,
+      "Average Packet Size": 0.0907,
+      "Packet Length Mean": 0.0826,
+      "Avg Bwd Segment Size": 0.0763,
+      "Max Packet Length": 0.0724,
+      "Bwd Packet Length Max": 0.0601,
+      "Bwd Packet Length Std": 0.0553,
+      "Flow Duration": 0.0402,
+      "Fwd IAT Std": 0.0356,
+      "PSH Flag Count": 0.0334,
+      "Fwd IAT Max": 0.0318,
+      "Flow IAT Max": 0.0276,
+      "Fwd IAT Total": 0.0256,
+      "Flow IAT Std": 0.0245,
+      "Protocol": 0.0186,
+      "Idle Mean": 0.0148,
+      "Idle Max": 0.0083,
+      "Idle Min": 0.006
     }
   },
-  "knn": {
-    "k": 7,
-    "weights": "distance",
-    "accuracy": 0.9805,
-    "macro_f1": 0.9491,
+  "xgboost": {
+    "accuracy": 0.9795,
+    "macro_f1": 0.9616,
     "per_family": {
       "Benign": {
-        "precision": 0.9845,
-        "recall": 0.9908,
-        "f1-score": 0.9876
+        "precision": 0.9929,
+        "recall": 0.964,
+        "f1-score": 0.9782
       },
       "BruteForce": {
-        "precision": 0.991,
-        "recall": 0.7906,
-        "f1-score": 0.8795
+        "precision": 0.7989,
+        "recall": 0.9807,
+        "f1-score": 0.8805
       },
       "DoS": {
-        "precision": 0.9432,
-        "recall": 0.9166,
-        "f1-score": 0.9297
+        "precision": 0.9853,
+        "recall": 0.9912,
+        "f1-score": 0.9883
       },
       "PortScan": {
-        "precision": 0.9994,
-        "recall": 0.9994,
-        "f1-score": 0.9994
+        "precision": 1.0,
+        "recall": 0.9991,
+        "f1-score": 0.9996
       }
     },
     "confusion": [
       [
-        30285,
-        276,
-        2,
-        2
+        16388,
+        127,
+        0,
+        485
       ],
       [
-        420,
-        4614,
+        79,
+        8922,
         0,
         0
       ],
       [
-        0,
         2,
-        3174,
+        5,
+        7993,
         0
       ],
       [
-        58,
+        37,
+        1,
         0,
+        1927
+      ]
+    ],
+    "feature_importance": {
+      "Protocol": 0.313,
+      "Bwd Packet Length Std": 0.1844,
+      "Packet Length Std": 0.1347,
+      "Avg Bwd Segment Size": 0.0965,
+      "PSH Flag Count": 0.0655,
+      "Bwd Packet Length Mean": 0.0653,
+      "Packet Length Variance": 0.0411,
+      "Flow Duration": 0.0209,
+      "Max Packet Length": 0.0178,
+      "Bwd Packet Length Max": 0.0158,
+      "Idle Mean": 0.0077,
+      "Fwd IAT Max": 0.0067,
+      "Average Packet Size": 0.0057,
+      "Idle Max": 0.0054,
+      "Fwd IAT Total": 0.0054,
+      "Flow IAT Std": 0.0052,
+      "Packet Length Mean": 0.0048,
+      "Fwd IAT Std": 0.0016,
+      "Flow IAT Max": 0.0015,
+      "Idle Min": 0.0011
+    }
+  },
+  "knn": {
+    "k": 13,
+    "weights": "distance",
+    "accuracy": 0.9904,
+    "macro_f1": 0.9849,
+    "per_family": {
+      "Benign": {
+        "precision": 0.9859,
+        "recall": 0.9941,
+        "f1-score": 0.99
+      },
+      "BruteForce": {
+        "precision": 0.9951,
+        "recall": 0.9293,
+        "f1-score": 0.9611
+      },
+      "DoS": {
+        "precision": 0.9893,
+        "recall": 0.9886,
+        "f1-score": 0.9889
+      },
+      "PortScan": {
+        "precision": 0.9999,
+        "recall": 0.9994,
+        "f1-score": 0.9996
+      }
+    },
+    "confusion": [
+      [
+        16900,
+        92,
         0,
-        219
+        8
+      ],
+      [
+        101,
+        8898,
+        1,
+        1
+      ],
+      [
+        2,
+        3,
+        7995,
+        0
+      ],
+      [
+        138,
+        1,
+        0,
+        1826
       ]
     ]
   },
@@ -215,72 +289,72 @@
     {
       "k": 3,
       "weights": "uniform",
-      "macro_f1": 0.9529
+      "macro_f1": 0.9787
     },
     {
       "k": 5,
       "weights": "uniform",
-      "macro_f1": 0.9555
+      "macro_f1": 0.9794
     },
     {
       "k": 7,
       "weights": "uniform",
-      "macro_f1": 0.9548
+      "macro_f1": 0.9794
     },
     {
       "k": 9,
       "weights": "uniform",
-      "macro_f1": 0.9514
+      "macro_f1": 0.9773
     },
     {
       "k": 11,
       "weights": "uniform",
-      "macro_f1": 0.9506
+      "macro_f1": 0.9778
     },
     {
       "k": 13,
       "weights": "uniform",
-      "macro_f1": 0.9497
+      "macro_f1": 0.9761
     },
     {
       "k": 15,
       "weights": "uniform",
-      "macro_f1": 0.9497
+      "macro_f1": 0.9766
     },
     {
       "k": 3,
       "weights": "distance",
-      "macro_f1": 0.9534
+      "macro_f1": 0.9802
     },
     {
       "k": 5,
       "weights": "distance",
-      "macro_f1": 0.9565
+      "macro_f1": 0.9805
     },
     {
       "k": 7,
       "weights": "distance",
-      "macro_f1": 0.9569
+      "macro_f1": 0.9814
     },
     {
       "k": 9,
       "weights": "distance",
-      "macro_f1": 0.9564
+      "macro_f1": 0.9813
     },
     {
       "k": 11,
       "weights": "distance",
-      "macro_f1": 0.9556
+      "macro_f1": 0.9813
     },
     {
       "k": 13,
       "weights": "distance",
-      "macro_f1": 0.9557
+      "macro_f1": 0.9814
     },
     {
       "k": 15,
       "weights": "distance",
-      "macro_f1": 0.9557
+      "macro_f1": 0.9808
     }
   ],
   "features_used": [

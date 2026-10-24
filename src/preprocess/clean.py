@@ -4,7 +4,7 @@ data/processed/sample.parquet without loading the full raw dataset into memory.
 
 Run from the project root:
 
-    python -m src.p2_preprocess.clean
+    python -m src.preprocess.clean
 """
 import json
 import shutil

@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 
-from src.p2_preprocess.binning import bin_counts, bin_counts_in_chunks
-from src.p2_preprocess.sampling import (
+from src.preprocess.binning import bin_counts, bin_counts_in_chunks
+from src.preprocess.sampling import (
     feature_columns,
     fit_scaler,
     fit_scaler_in_chunks,

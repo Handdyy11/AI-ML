@@ -2,7 +2,7 @@
 
 Run after prepare.py, from the project root:
 
-    python -m src.p3_supervised.models
+    python -m src.supervised.models
 
 Reads  data/processed/train.parquet, test.parquet, scaler.joblib, feature_columns.json
 Writes results/metrics_knn.json, results/figures/confusion_matrix_knn.png,
@@ -18,6 +18,7 @@ matplotlib.use("Agg")  # draw to files, no window needed
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from src.supervised.xgboost_model import StringLabelXGBClassifier
 from sklearn.dummy import DummyClassifier
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.metrics import (
@@ -29,6 +30,7 @@ from sklearn.metrics import (
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline
+from sklearn.utils.class_weight import compute_sample_weight
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 
@@ -215,6 +217,24 @@ def _run_models() -> None:
     ).fit(X_train, y_train)
     forest_pred = forest.predict(X_test)
 
+    print("\nTraining XGBoost ...")
+    xgboost = StringLabelXGBClassifier(
+        n_estimators=300,
+        max_depth=8,
+        learning_rate=0.1,
+        subsample=0.9,
+        colsample_bytree=0.9,
+        min_child_weight=2,
+        n_jobs=-1,
+        random_state=config.SEED,
+    )
+    xgboost.fit(
+        X_train,
+        y_train,
+        sample_weight=compute_sample_weight("balanced", y_train),
+    )
+    xgboost_pred = xgboost.predict(X_test)
+
     results = {
         "majority_baseline": evaluate(y_test, baseline.predict(X_test)),
         "decision_tree": {
@@ -228,6 +248,15 @@ def _run_models() -> None:
             "feature_importance": {
                 f: round(float(w), 4)
                 for f, w in sorted(zip(chosen, forest.feature_importances_),
+                                   key=lambda x: -x[1])
+            },
+        },
+        "xgboost": {
+            **evaluate(y_test, xgboost_pred),
+            "confusion": confusion_matrix(y_test, xgboost_pred, labels=labels).tolist(),
+            "feature_importance": {
+                f: round(float(w), 4)
+                for f, w in sorted(zip(chosen, xgboost.feature_importances_),
                                    key=lambda x: -x[1])
             },
         },
@@ -256,13 +285,18 @@ def _run_models() -> None:
         {"model": forest, "selector": selector, "features": cols},
         config.DATA_PROCESSED / "forest_model.joblib",
     )
+    joblib.dump(
+        {"model": xgboost, "selector": selector, "features": cols},
+        config.DATA_PROCESSED / "xgboost_model.joblib",
+    )
     print("\nTest-set results")
     
-    models = ("knn", "decision_tree", "random_forest", "majority_baseline")
+    models = ("knn", "decision_tree", "random_forest", "xgboost", "majority_baseline")
     names = {
         "knn": "k-NN",
         "decision_tree": "decision tree",
         "random_forest": "random forest",
+        "xgboost": "XGBoost",
         "majority_baseline": "always say Benign",
     }
 
@@ -275,7 +309,7 @@ def _run_models() -> None:
     )
     print(summary.to_string())
 
-    for m in ("knn", "decision_tree", "random_forest"):
+    for m in ("knn", "decision_tree", "random_forest", "xgboost"):
         print(f"\n{names[m]}: recall and precision per family "
               f"(recall = share of real attacks it caught)")
         for family, vals in results[m]["per_family"].items():
@@ -284,6 +318,10 @@ def _run_models() -> None:
 
     print("\nTop 5 features by random forest importance")
     for f, w in list(results["random_forest"]["feature_importance"].items())[:5]:
+        print(f"  {f:<28}{w:.4f}")
+
+    print("\nTop 5 features by XGBoost importance")
+    for f, w in list(results["xgboost"]["feature_importance"].items())[:5]:
         print(f"  {f:<28}{w:.4f}")
 
     mlflow.log_params(
@@ -303,9 +341,21 @@ def _run_models() -> None:
             "random_forest_n_estimators": 200,
             "random_forest_min_samples_leaf": 2,
             "random_forest_class_weight": "balanced_subsample",
+            "xgboost_n_estimators": 300,
+            "xgboost_max_depth": 8,
+            "xgboost_learning_rate": 0.1,
+            "xgboost_subsample": 0.9,
+            "xgboost_colsample_bytree": 0.9,
+            "xgboost_sample_weight": "balanced",
         }
     )
-    for model_name in ("knn", "decision_tree", "random_forest", "majority_baseline"):
+    for model_name in (
+        "knn",
+        "decision_tree",
+        "random_forest",
+        "xgboost",
+        "majority_baseline",
+    ):
         model_results = results[model_name]
         mlflow.log_metrics(
             {
@@ -327,6 +377,7 @@ def _run_models() -> None:
             "knn": knn,
             "decision_tree": tree,
             "random_forest": forest,
+            "xgboost": xgboost,
             "majority_baseline": baseline,
         },
         results,
@@ -344,6 +395,7 @@ def _run_models() -> None:
         config.DATA_PROCESSED / "knn_model.joblib",
         config.DATA_PROCESSED / "tree_model.joblib",
         config.DATA_PROCESSED / "forest_model.joblib",
+        config.DATA_PROCESSED / "xgboost_model.joblib",
     ):
         mlflow.log_artifact(str(artifact), artifact_path="model-results")
 

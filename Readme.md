@@ -10,9 +10,9 @@ cd C:\Users\harsh\OneDrive\Desktop\cyber_defence_ai
 .\.venv\Scripts\Activate.ps1
 cd .\SENTRIX
 
-python -m src.p2_preprocess.clean
-python -m src.p2_preprocess.prepare
-python -m src.p3_supervised.models
+python -m src.preprocess.clean
+python -m src.preprocess.prepare
+python -m src.supervised.models
 ```
 
 The cleaning and preparation runs record data counts, sampling/split settings,
@@ -20,7 +20,7 @@ class proportions, preprocessing statistics, the scaler, feature list, and
 histograms. The model comparison run records aggregate model settings and
 metrics, the k-NN tuning table, evaluation chart, and saved models. It also
 creates a nested run for each fitted classifier (k-NN, decision tree, random
-forest, and the majority-class baseline), with that model's parameters, test
+forest, XGBoost, and the majority-class baseline), with that model's parameters, test
 metrics, and a loadable scikit-learn model artifact. These model artifacts
 expect scaled input features; the scaler and selected feature list are logged
 by the preparation run.

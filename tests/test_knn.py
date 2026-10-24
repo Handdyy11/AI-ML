@@ -1,12 +1,14 @@
 import numpy as np
 import mlflow
+import joblib
 from sklearn.neighbors import KNeighborsClassifier
 
 from src import config
 from src.mlflow_tracking import configure_tracking
-from src.p3_supervised.models import (
+from src.supervised.models import (
     K_CHOICES,
     WEIGHT_CHOICES,
+    StringLabelXGBClassifier,
     _log_model_runs,
     choose_k,
     evaluate,
@@ -56,6 +58,28 @@ def test_evaluate_reports_per_family_recall():
     assert out["accuracy"] == 0.9
     assert out["per_family"]["DoS"]["recall"] == 0.5
     assert out["per_family"]["Benign"]["recall"] == 1.0
+
+
+def test_xgboost_model_round_trips_string_class_labels(tmp_path):
+    X, y = make_blobs(n_per_class=20)
+    model = StringLabelXGBClassifier(
+        n_estimators=10,
+        max_depth=3,
+        n_jobs=1,
+        random_state=0,
+    ).fit(X, y)
+
+    predictions = model.predict(X)
+    assert set(predictions) <= set(y)
+    assert set(model.classes_) == set(y)
+    assert model.feature_importances_.shape == (X.shape[1],)
+
+    model_path = tmp_path / "xgboost.joblib"
+    joblib.dump(model, model_path)
+    loaded = joblib.load(model_path)
+    np.testing.assert_array_equal(loaded.predict(X), predictions)
+    loaded.n_jobs = 1
+    assert loaded.estimator_.n_jobs == 1
 
 
 def test_log_model_runs_saves_a_loadable_model_and_test_metrics(tmp_path, monkeypatch):
