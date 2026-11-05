@@ -1,0 +1,7 @@
+data/processed/xgboost_model.joblib filter=lfs diff=lfs merge=lfs -text
+data/processed/scaler.joblib filter=lfs diff=lfs merge=lfs -text
+data/processed/train.parquet filter=lfs diff=lfs merge=lfs -text
+data/processed/test.parquet filter=lfs diff=lfs merge=lfs -text
+data/processed/knn_model.joblib filter=lfs diff=lfs merge=lfs -text
+data/processed/tree_model.joblib filter=lfs diff=lfs merge=lfs -text
+data/processed/forest_model.joblib filter=lfs diff=lfs merge=lfs -text
